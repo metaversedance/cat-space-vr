@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CAT SPACE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
+    <script src="//cdn.rawgit.com/donmccurdy/aframe-extras/v3.12.4/dist/aframe-extras.min.js"></script>
+    <script src="https://unpkg.com/super-hands@2.1.0/dist/super-hands.min.js"></script>
+
+    <style>
+      .scrape-bttn {
+        position: fixed;
+        background-color: #42f4e8;
+        width: 100px;
+        height: 50px;
+        z-index: 1;
+
+      }
+    </style>
+  </head>
+  <button class="scrape-bttn">SCRAPE LOLCATS</button>
+  <script type="text/javascript">
+    $(".scrape-bttn").on("click", function(){
+      $.ajax({
+        method: "GET",
+        url: "/scrape-cats"
+      }).done(function(){
+        location.reload()
+      })
+    })
+
+  </script>
+
+  <script type="text/javascript">
+
+  AFRAME.registerComponent("cat-id",{
+    schema: {
+      type:"string"
+    }
+  })
+  AFRAME.registerComponent("init-cats", {
+    init: function() {
+
+      var self = this;
+
+      $.getJSON("/cats", function(data){
+        data.forEach(function(cat){
+
+          let catEl = document.createElement("a-entity");
+
+          catEl.setAttribute("geometry", {primitive:"box"});
+          catEl.setAttribute("material",{src: cat.imgSrc});
+          catEl.setAttribute("position", cat.position);
+          catEl.setAttribute("rotation", cat.rotation);
+          catEl.setAttribute("scale",cat.scale)
+
+
+          catEl.setAttribute("hoverable","");
+          catEl.setAttribute("grabbable","");
+          catEl.setAttribute("stretchable","");
+          catEl.setAttribute("dropppable","");
+          catEl.setAttribute("class","interactable");
+          catEl.setAttribute("cat-id",cat._id)
+
+          var title = document.createElement("a-entity");
+          title.setAttribute("text",{
+            value: cat.title,
+            width: 5,
+            color:"black",
+            align: "center",
+            font: "mozillavr"
+          })
+
+          title.setAttribute("position","0 1 0")
+          catEl.appendChild(title)
+
+          self.el.sceneEl.appendChild(catEl);
+
+        })
+
+      })
+
+    }
+  });
+
+  AFRAME.registerComponent("update-db-onchange", {
+    init: function() {
+      var self = this;
+      this.el.sceneEl.addEventListener("hover-end", this.onEnd);
+
+    },
+    onEnd:function(e){
+      console.log("grab")
+        var catEl = e.detail.target;
+        var catPos = catEl.getAttribute("position");
+        var catRot = catEl.getAttribute("rotation");
+        var catScale = catEl.getAttribute("scale");
+
+        var changeData = {
+          posX: catPos.x,
+          posY: catPos.y,
+          posZ: catPos.z,
+          rotX: catRot.x,
+          rotY: catRot.y,
+          rotZ: catRot.z,
+          scaleX: catScale.x,
+          scaleY: catScale.y,
+          scaleZ: catScale.z
+        }
+
+        var catId = catEl.getAttribute("cat-id")
+
+        console.log("position",changeData.position)
+
+        console.log("rotation",changeData.rotation)
+        console.log("scale",changeData.scale)
+
+        $.ajax({
+          method: "POST",
+          url: "/update-cat-attributes/"+catId,
+          data: changeData
+        })
+
+
+      }
+  });
+  </script>
+  <body>
+    <a-scene>
+      <a-assets>
+
+      </a-assets>
+      <a-entity update-db-onchange init-cats position="3 2 14" progressive-controls="objects: .interactable"></a-entity>
+    </a-scene>
+  </body>
+</html>
