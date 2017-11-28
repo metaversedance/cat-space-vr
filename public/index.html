@@ -86,7 +86,8 @@
   AFRAME.registerComponent("update-db-onchange", {
     init: function() {
       var self = this;
-      this.el.sceneEl.addEventListener("hover-end", this.onEnd);
+      this.el.sceneEl.addEventListener("grab-end", this.onEnd);
+
 
     },
     onEnd:function(e){
